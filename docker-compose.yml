@@ -75,6 +75,54 @@ services:
       timeout: 10s
       retries: 5
 
+  spark-master:
+    image: docker.arvancloud.ir/bitnami/spark:latest
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+    volumes:
+      - ./spark_jobs:/spark_jobs
+    ports:
+      - "7077:7077"
+      - "8081:8080"
+    networks:
+      - kafka-net
+
+  spark-worker-1:
+    image: docker.arvancloud.ir/bitnami/spark:latest
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - ./spark_jobs:/spark_jobs
+    depends_on:
+      - spark-master
+    networks:
+      - kafka-net
+
+  spark-worker-2:
+    image: docker.arvancloud.ir/bitnami/spark:latest
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - ./spark_jobs:/spark_jobs
+    depends_on:
+      - spark-master
+    networks:
+      - kafka-net
+
+
   kafkaui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafkaui
@@ -101,12 +149,13 @@ services:
       - KEY_SERIALIZER=org.apache.kafka.common.serialization.ByteArraySerializer
       - VALUE_SERIALIZER=org.apache.kafka.common.serialization.ByteArraySerializer
       - ACKS=all
-    command: ./bin/eventsim -c configs/Guitar-config.json --continuous --from 200 --nusers 2000 -k 1
+    command: ./bin/eventsim -c configs/Guitar-config.json --continuous --from 200 --nusers 20 -k 1
     networks:
       - kafka-net
     depends_on:
       kafka-3:
         condition: service_healthy
+
 
 
 
