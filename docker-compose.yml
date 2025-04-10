@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   kafka-1:
     image: confluentinc/cp-kafka:latest
@@ -74,7 +73,33 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-namenode
+    environment:
+      - CLUSTER_NAME=spotify-cluster
+    ports:
+      - "9870:9870"  # HDFS web UI
+      - "8020:8020"  # HDFS client access
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - kafka-net
 
+  hadoop-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hadoop-datanode
+    environment:
+      - CLUSTER_NAME=spotify-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:8020
+      - DATANODE_HOSTNAME=hadoop-datanode
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    depends_on:
+      - hadoop-namenode
+    networks:
+      - kafka-net
+  
   spark-master:
     image: docker.arvancloud.ir/bitnami/spark:latest
     container_name: spark-master
@@ -168,4 +193,5 @@ volumes:
   kafka1_data:
   kafka2_data:
   kafka3_data:
-
+  hadoop_datanode:
+  hadoop_namenode:
