@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<configuration>
+  <!-- Metastore DB connection -->
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <value>jdbc:postgresql://postgres:5432/metastore</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>org.postgresql.Driver</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>hive</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>hive</value>
+  </property>
+
+  <!-- Hive Metastore URI for remote access -->
+  <property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://hive-metastore:9083</value>
+  </property>
+
+  <!-- Warehouse directory in HDFS -->
+  <property>
+    <name>hive.metastore.warehouse.dir</name>
+    <value>/user/hive/warehouse</value>
+  </property>
+  <property>
+  <name>hive.exec.dynamic.partition</name>
+  <value>true</value>
+  </property>
+  <property>
+  <name>hive.exec.dynamic.partition.mode</name>
+  <value>nonstrict</value>
+  </property>
+</configuration>

@@ -1,14 +1,16 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, from_json, expr, to_timestamp, when
+from pyspark.sql.functions import col, from_json, to_timestamp, to_date
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, BooleanType, DoubleType
 
-# Initialize Spark Session
+# Initialize Spark Session with Hive support
 spark = SparkSession.builder \
     .appName("AuthEventsStream") \
+    .config("spark.sql.warehouse.dir", "/user/hive/warehouse") \
+    .config("hive.metastore.uris", "thrift://hive-metastore:9083") \
+    .enableHiveSupport() \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("WARN")
-
 
 # Define schema for JSON data
 schema = StructType([
@@ -38,51 +40,34 @@ df_raw = spark.readStream \
     .option("startingOffsets", "earliest") \
     .load()
 
-# Convert JSON string into DataFrame
+# Parse JSON payload
 df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
     .select(from_json(col("value"), schema).alias("data")) \
     .select("data.*")
 
-# Convert timestamp from milliseconds to readable format
-df_transformed = df_parsed.withColumn(
-    "event_time", 
-    to_timestamp((col("ts").cast("long") / 1000).cast("timestamp"))
+# Add parsed timestamp and partition column
+df_transformed = df_parsed \
+    .withColumn("event_time", to_timestamp((col("ts").cast("long") / 1000))) \
+    .withColumn("event_date", to_date(to_timestamp((col("ts").cast("long") / 1000))))  # partition column
+
+# Cleaned data (filter out nulls)
+df_cleaned = df_transformed.filter(
+    col("userId").isNotNull() &
+    col("sessionId").isNotNull() &
+    col("level").isNotNull() &
+    col("lat").isNotNull() &
+    col("lon").isNotNull() &
+    col("userAgent").isNotNull() &
+    col("firstName").isNotNull()
 )
 
-# Data cleaning and validation
-df_cleaned = df_transformed \
-    .filter(
-        (col("userId").isNotNull()) &
-        (col("sessionId").isNotNull()) &
-        (col("level").isNotNull()) &
-        (col("lat").isNotNull()) &
-        (col("lon").isNotNull()) &
-        (col("userAgent").isNotNull()) &
-        (col("firstName").isNotNull()) &
-        (col("lastName").isNotNull()) &
-        (col("ts").isNotNull())
-    ) \
-    .filter(
-        (col("lat") >= -90) & (col("lat") <= 90) &  # Latitude range check
-        (col("lon") >= -180) & (col("lon") <= 180) &  # Longitude range check
-        (col("userId") > 0) &  # userId validation
-        (col("sessionId") > 0) &  # sessionId validation
-        (col("itemInSession") >= 0)  # Relax itemInSession validation to allow 0
-    ) \
-    .withColumn(
-        "userAgent", 
-        when(col("userAgent").rlike(r'[^\x00-\x7F]'), None).otherwise(col("userAgent"))
-    )
-
-
-
-
-# Write output to console (or any sink)
+# Write to HDFS in Parquet format, partitioned by date
 query = df_cleaned.writeStream \
-    .outputMode("update") \
-    .format("console") \
-    .trigger(processingTime="1 minute") \
+    .format("parquet") \
+    .option("path", "hdfs://hadoop-namenode:8020/user/hive/warehouse/auth_events") \
+    .option("checkpointLocation", "hdfs://hadoop-namenode:8020/user/hive/warehouse/checkpoints/auth_events") \
+    .partitionBy("event_date") \
+    .outputMode("append") \
     .start()
 
 query.awaitTermination()
-
