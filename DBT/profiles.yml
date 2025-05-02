@@ -1,0 +1,14 @@
+DBT:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: session
+      host: localhost
+      schema: default
+      user: taha  # change to your Linux username
+      connect_retries: 5
+      retries: 3
+      connection_parameters:
+        spark.hadoop.fs.defaultFS: hdfs://localhost:8020
+        spark.sql.warehouse.dir: hdfs://localhost:8020/user/spark/warehouse

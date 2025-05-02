@@ -8,5 +8,5 @@ auth_with_ts as (
     from auth_events
 )
 
-select distinct city, state, zip, lon, lat
+select distinct userId, firstName, lastName, gender, level, registration
 from auth_with_ts

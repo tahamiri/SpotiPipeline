@@ -110,7 +110,7 @@ services:
       - SPARK_MASTER_HOST=192.168.6.77
       - SPARK_MASTER_HOST=spark-master
       - HADOOP_HOME=/usr/local/hadoop
-      - HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+      - HADOOP_CONF_DIR=/opt/spark/conf
       - SPARK_HADOOP_VERSION=3.2.1
       - HADOOP_HOME_DIR=/usr/local/hadoop
       - spark.hadoop.fs.defaultFS=hdfs://hadoop-namenode:8020
@@ -118,6 +118,7 @@ services:
       - spark.hadoop.fs.file.impl=org.apache.hadoop.fs.LocalFileSystem
     volumes:
       - ./spark_jobs:/spark_jobs
+      - ./hadoop-conf:/opt/spark/conf
     ports:
       - "7077:7077"
       - "8081:8080"
@@ -134,7 +135,7 @@ services:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=2
       - HADOOP_HOME=/usr/local/hadoop
-      - HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+      - HADOOP_CONF_DIR=/opt/spark/conf
       - SPARK_HADOOP_VERSION=3.2.1
       - HADOOP_HOME_DIR=/usr/local/hadoop
       - spark.hadoop.fs.defaultFS=hdfs://hadoop-namenode:8020
@@ -142,6 +143,7 @@ services:
       - spark.hadoop.fs.file.impl=org.apache.hadoop.fs.LocalFileSystem
     volumes:
       - ./spark_jobs:/spark_jobs
+      - ./hadoop-conf:/opt/spark/conf
     depends_on:
       - spark-master
     networks:
@@ -157,14 +159,15 @@ services:
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=2
       - HADOOP_HOME=/usr/local/hadoop
-      - HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+      - HADOOP_CONF_DIR=/opt/spark/conf
       - SPARK_HADOOP_VERSION=3.2.1
-      - HADOOP_HOME_DIR=/usr/local/hadoop
+      - HADOOP_HOME_DIR=/opt/spark/conf
       - spark.hadoop.fs.defaultFS=hdfs://hadoop-namenode:8020
       - spark.hadoop.fs.hdfs.impl=org.apache.hadoop.hdfs.DistributedFileSystem
       - spark.hadoop.fs.file.impl=org.apache.hadoop.fs.LocalFileSystem
     volumes:
       - ./spark_jobs:/spark_jobs
+      - ./hadoop-conf:/opt/spark/conf
     depends_on:
       - spark-master
     networks:

@@ -1,14 +1,35 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import from_json
+from pyspark.sql.types import StructType, StructField, StringType, LongType, DoubleType
 
-# Spark session without Hive support
+# Define schema for status_change_events
+status_change_schema = StructType([
+    StructField("ts", LongType(), True),
+    StructField("sessionId", LongType(), True),
+    StructField("auth", StringType(), True),
+    StructField("level", StringType(), True),
+    StructField("itemInSession", LongType(), True),
+    StructField("city", StringType(), True),
+    StructField("zip", StringType(), True),
+    StructField("state", StringType(), True),
+    StructField("userAgent", StringType(), True),
+    StructField("lon", DoubleType(), True),
+    StructField("lat", DoubleType(), True),
+    StructField("userId", LongType(), True),
+    StructField("lastName", StringType(), True),
+    StructField("firstName", StringType(), True),
+    StructField("gender", StringType(), True),
+    StructField("registration", LongType(), True)
+])
+
+# Create Spark session
 spark = SparkSession.builder \
     .appName("StatusChangeEventsBronzeLayer") \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("WARN")
 
-# Read raw data from Kafka
+# Read from Kafka topic: status_change_events
 df_raw = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka-1:9092,kafka-2:9092,kafka-3:9092") \
@@ -16,11 +37,13 @@ df_raw = spark.readStream \
     .option("startingOffsets", "earliest") \
     .load()
 
-# Optional: Cast Kafka message value to STRING
-df_raw_value = df_raw.selectExpr("CAST(value AS STRING) as raw_value")
+# Parse JSON from Kafka value
+df_parsed = df_raw.selectExpr("CAST(value AS STRING) AS raw_json") \
+    .withColumn("data", from_json("raw_json", status_change_schema)) \
+    .select("data.*")
 
-# Write to HDFS in raw format (Parquet)
-query = df_raw_value.writeStream \
+# Write to HDFS in Parquet format
+query = df_parsed.writeStream \
     .format("parquet") \
     .option("path", "hdfs://hadoop-namenode:8020/user/bronze/status_change_events") \
     .option("checkpointLocation", "hdfs://hadoop-namenode:8020/user/bronze/checkpoints/status_change_events") \

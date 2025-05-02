@@ -3,3 +3,6 @@ commands.txt
 logs/
 .gitignore
 target/
+sample_raw_data.txt
+silver_tables.txt
+DBT/.user.yml

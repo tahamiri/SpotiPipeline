@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: bronze
+    tables:
+      - name: auth_events
+        external:
+          location: "hdfs://hadoop-namenode:8020/user/bronze/auth_events"
+          file_format: parquet
+      - name: listen_events
+        external:
+          location: "hdfs://hadoop-namenode:8020/user/bronze/listen_events"
+          file_format: parquet
+      - name: page_view_events
+        external:
+          location: "hdfs://hadoop-namenode:8020/user/bronze/page_view_events"
+          file_format: parquet
