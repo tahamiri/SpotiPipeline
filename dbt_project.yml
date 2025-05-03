@@ -1,10 +1,16 @@
-DBT:
-  target: dev
-  outputs:
-    dev:
-      type: spark
-      method: session
-      schema: default
-      file_format: parquet
-      location_root: "hdfs://hadoop-namenode:8020/user/silver"
-      threads: 4
+name: gold_layer
+version: "1.0"
+config-version: 2
+
+profile: spark_profile
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_modules"]
+
+models:
+  gold_layer:
+    marts:
+      +materialized: parquet
+    staging:
+      +materialized: view
