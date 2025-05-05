@@ -13,11 +13,15 @@ This project simulates a data pipeline and analytics system for a music streamin
 ├── DBT/
 │   └── models/
 │       └── marts/              # dbt models for gold layer
+│       └── staging/            # dbt models for silver layer
 ├── README.md                   # Project documentation (this file)
 └── images/
     ├── daily_user_listen_counts.png
     ├── top_songs.png
     └── mean_listening_time.png
+└── spark_jobs/ (some spark streaming jobs for bronze layer)
+│
+└── hadoop_conf/ (hdfs conf files)
 ```
 
 ---
@@ -31,6 +35,7 @@ This project simulates a data pipeline and analytics system for a music streamin
 | Transformation| dbt (with Spark adapter)                        |
 | Query Engine | ClickHouse (`altinity/clickhouse-server:latest`) |
 | BI/Visualization | Metabase (`metabase/metabase:latest`)       |
+| Event Streaming | Kafka (kraft mode)                            |
 
 ---
 
@@ -155,15 +160,18 @@ docker-compose up -d
 ```
 
 3. Access UIs:
-   - Spark UI: `http://localhost:4040`
+   - Spark UI: `http://localhost:8081`
    - HDFS UI: `http://localhost:9870`
    - ClickHouse: `http://localhost:8123`
    - Metabase: `http://localhost:3000`
 
-4. Run dbt models:
+4. Run spark jobs and dbt models:
 
 ```bash
-cd DBT
+cd spark_jobs
+spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 --total-executor-cores 1 --executor-cores 1 --executor-memory 512m /spark_jobs/AuthEventsBronzeLayer.py
+
+cd ../DBT
 dbt run
 ```
 
@@ -197,4 +205,4 @@ Data Engineer | Backend Developer
 
 ## 📄 License
 
-This project is open for learning and demonstration purposes.
+This project is open for learning purposes.
