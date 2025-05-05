@@ -199,7 +199,7 @@ dbt run
 
 **Taha**  
 Data Engineer | Backend Developer  
-📧 [tahamir02@gmail.com](mailto:tahamir02@gmail.com)
+📧 [tahamiri02@gmail.com](mailto:tahamiri02@gmail.com)
 
 ---
 
